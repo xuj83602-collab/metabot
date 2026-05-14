@@ -2692,13 +2692,13 @@ export function normalizePromptForEngine(text: string, engine: EngineName): stri
 }
 
 /** 替换文件名中的非法字符（Windows 不允许 | < > : " / \ ? * 等） */
-function sanitizeFilename(name: string): string {
-  return name.replace(/[|<>:"/\\?*]/g, '_');
+function sanitizeFilename(name: any): string {
+  return String(name || '').replace(/[|<>:"/\\?*]/g, '_');
 }
 
 /** 用 MD5 hash 生成短文件名，避免 Windows 路径过长 (>260 字符) */
-function hashFilename(name: string): string {
-  return crypto.createHash('md5').update(name).digest('hex');
+function hashFilename(name: any): string {
+  return crypto.createHash('md5').update(String(name || '')).digest('hex');
 }
 
 export function isContextOverflowError(errorMessage?: string): boolean {
