@@ -3,7 +3,7 @@
 #
 # 用法:
 #   ./scripts/switch-model.sh --model claude-sonnet-4-6
-#   ./scripts/switch-model.sh --model deepseek-v3 --base-url https://api.deepseek.com
+#   ./scripts/switch-model.sh --model deepseek-v4-flash --base-url https://api.deepseek.com
 #   ./scripts/switch-model.sh --status
 #
 # API Key 优先从环境变量 ANTHROPIC_API_KEY 读取；如需交互式输入使用 --api-key
@@ -24,7 +24,7 @@ usage() {
 
 示例:
   $0 --model claude-sonnet-4-6
-  $0 --model deepseek-v3 --base-url https://api.deepseek.com
+  $0 --model deepseek-v4-flash --base-url https://api.deepseek.com
   $0 --status
 
 环境变量:
@@ -132,7 +132,7 @@ fi
 # 模型名基本校验
 if [[ ! "$MODEL" =~ ^[a-zA-Z0-9._-]+$ ]]; then
   echo "警告: 模型名称包含非常规字符: $MODEL"
-  echo "常见格式: claude-sonnet-4-6, deepseek-v3, gpt-4o"
+  echo "常见格式: claude-sonnet-4-6, deepseek-v4-flash, gpt-5.5"
   read -p "是否继续？(y/N) " -n 1 -r; echo
   [[ ! $REPLY =~ ^[Yy]$ ]] && exit 1
 fi
