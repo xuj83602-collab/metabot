@@ -275,12 +275,12 @@ export function useRtcCallMode({ activeBotName, activeSessionId, token, messages
           isAutoPublish: true,
           isAutoSubscribeAudio: true,
           isAutoSubscribeVideo: false,
-          roomProfileType: VERTC.RoomProfileType?.chat ?? 0,
+          roomProfileType: (VERTC as any).RoomProfileType?.chat ?? 0,
         },
       );
       await engine.startAudioCapture();
       // Explicitly publish audio as belt-and-suspenders (official demo does this)
-      await engine.publishStream(VERTC.MediaType?.AUDIO ?? 1);
+      await engine.publishStream((VERTC as any).MediaType?.AUDIO ?? 1);
 
       setCallPhase('connected');
       setCallStartTime(Date.now());
@@ -364,12 +364,12 @@ export function useRtcCallMode({ activeBotName, activeSessionId, token, messages
           isAutoPublish: true,
           isAutoSubscribeAudio: true,
           isAutoSubscribeVideo: false,
-          roomProfileType: VERTC.RoomProfileType?.chat ?? 0,
+          roomProfileType: (VERTC as any).RoomProfileType?.chat ?? 0,
         },
       );
       await engine.startAudioCapture();
       // Explicitly publish audio as belt-and-suspenders (official demo does this)
-      await engine.publishStream(VERTC.MediaType?.AUDIO ?? 1);
+      await engine.publishStream((VERTC as any).MediaType?.AUDIO ?? 1);
 
       setCallPhase('connected');
       setCallStartTime(Date.now());

@@ -184,6 +184,12 @@ export interface AppStore {
   incomingVoiceCall: { sessionId: string; roomId: string; token: string; appId: string; userId: string; aiUserId: string; chatId: string; botName: string; prompt?: string } | null;
   setIncomingVoiceCall: (call: { sessionId: string; roomId: string; token: string; appId: string; userId: string; aiUserId: string; chatId: string; botName: string; prompt?: string } | null) => void;
 
+  // Streaming ASR
+  asrState: 'idle' | 'connecting' | 'active' | 'error';
+  asrPartialText: string;
+  setAsrState: (state: 'idle' | 'connecting' | 'active' | 'error') => void;
+  setAsrPartialText: (text: string) => void;
+
   // Sidebar
   sidebarOpen: boolean;
   toggleSidebar: () => void;

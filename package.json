@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run build:web && tsc && cp -r src/memory/static dist/memory/static",
-    "build:web": "cd web && npm install --include=dev && ./node_modules/.bin/vite build",
+    "build:web": "cd web && npm install --include=dev && npm run build",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "test": "vitest run",

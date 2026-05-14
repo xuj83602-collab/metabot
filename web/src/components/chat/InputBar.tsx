@@ -55,8 +55,8 @@ export function InputBar({ connected, isRunning, onSend, onStop, onStartCall, ca
   const streamRef = useRef<MediaStream | null>(null);
   const touchStartYRef = useRef(0);
   const cancelledRef = useRef(false);
-  const durationTimerRef = useRef<ReturnType<typeof setInterval>>();
-  const partialTimerRef = useRef<ReturnType<typeof setInterval>>();
+  const durationTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const partialTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const partialBusyRef = useRef(false);
   const recordingRef = useRef(false); // guard against double-start
 

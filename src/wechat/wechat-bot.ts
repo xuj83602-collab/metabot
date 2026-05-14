@@ -155,9 +155,13 @@ function mapToIncomingMessage(msg: ILinkMessage): IncomingMessage | undefined {
   return base;
 }
 
-/** Encode CDN media ref as "aesKey|encryptQueryParam" for download later. */
-function encodeCdnRef(media: { aes_key?: string; encrypt_query_param?: string }): string {
-  return `${media.aes_key || ''}|${media.encrypt_query_param || ''}`;
+/** Encode CDN media ref as "aesKey|encryptQueryParam" for download later.
+ *  iLink API 返回的结构：image_item { aeskey(hex), media: { aes_key(base64), encrypt_query_param } }
+ *  优先使用顶层的 hex key（aeskey），回退到 media 中的 base64 key */
+function encodeCdnRef(img: any): string {
+  const aesKey = img.aeskey || img.media?.aes_key || img.aes_key || '';
+  const encryptParam = img.media?.encrypt_query_param || img.encrypt_query_param || '';
+  return `${aesKey}|${encryptParam}`;
 }
 
 function applyItem(msg: IncomingMessage, item: ILinkMessageItem, isFirst: boolean): void {

@@ -1,3 +1,4 @@
+import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as fsPromises from 'node:fs/promises';
 import * as path from 'node:path';
@@ -1634,7 +1635,7 @@ export class MessageBridge {
     let imagePath: string | undefined;
     let filePath: string | undefined;
     if (imageKey) {
-      imagePath = path.join(downloadsDir, `${imageKey}.png`);
+      imagePath = path.join(downloadsDir, `${hashFilename(imageKey)}.png`);
       const ok = await this.sender.downloadImage(msgId, imageKey, imagePath);
       if (ok) {
         prompt = `${enginePromptText}\n\n[Image saved at: ${imagePath}]\nPlease use the Read tool to read and analyze this image file.`;
@@ -1645,7 +1646,7 @@ export class MessageBridge {
 
     // Handle file download if present
     if (fileKey && fileName) {
-      filePath = path.join(downloadsDir, `${fileKey}_${fileName}`);
+      filePath = path.join(downloadsDir, `${hashFilename(fileKey)}_${sanitizeFilename(fileName)}`);
       const ok = await this.sender.downloadFile(msgId, fileKey, filePath);
       if (ok) {
         prompt = `${enginePromptText}\n\n[File saved at: ${filePath}]\nPlease use the Read tool (for text/code files, images, PDFs) or Bash tool (for other formats) to read and analyze this file.`;
@@ -1659,7 +1660,7 @@ export class MessageBridge {
     if (msg.extraMedia && msg.extraMedia.length > 0) {
       for (const media of msg.extraMedia) {
         if (media.imageKey) {
-          const p = path.join(downloadsDir, `${media.imageKey}.png`);
+          const p = path.join(downloadsDir, `${hashFilename(media.imageKey)}.png`);
           const ok = await this.sender.downloadImage(media.messageId, media.imageKey, p);
           if (ok) {
             extraPaths.push(p);
@@ -1667,7 +1668,7 @@ export class MessageBridge {
           }
         }
         if (media.fileKey && media.fileName) {
-          const p = path.join(downloadsDir, `${media.fileKey}_${media.fileName}`);
+          const p = path.join(downloadsDir, `${hashFilename(media.fileKey)}_${sanitizeFilename(media.fileName)}`);
           const ok = await this.sender.downloadFile(media.messageId, media.fileKey, p);
           if (ok) {
             extraPaths.push(p);
@@ -2688,6 +2689,16 @@ export function normalizePromptForEngine(text: string, engine: EngineName): stri
   const suffix = match[2] ?? '';
   if (suffix && !/^\s/.test(suffix)) return text;
   return `$${match[1]}${suffix}`;
+}
+
+/** 替换文件名中的非法字符（Windows 不允许 | < > : " / \ ? * 等） */
+function sanitizeFilename(name: string): string {
+  return name.replace(/[|<>:"/\\?*]/g, '_');
+}
+
+/** 用 MD5 hash 生成短文件名，避免 Windows 路径过长 (>260 字符) */
+function hashFilename(name: string): string {
+  return crypto.createHash('md5').update(name).digest('hex');
 }
 
 export function isContextOverflowError(errorMessage?: string): boolean {

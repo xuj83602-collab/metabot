@@ -13,6 +13,12 @@ const POLL_TIMEOUT_S = 35;
 export interface CDNMedia {
   encrypt_query_param?: string;
   aes_key?: string; // base64 encoded AES-128 key
+  /** 实际 API 返回中 aes_key/encrypt_query_param 可能嵌套在 media 对象里 */
+  media?: {
+    encrypt_query_param?: string;
+    aes_key?: string;
+    full_url?: string;
+  };
 }
 
 export interface ILinkMessageItem {
@@ -336,20 +342,36 @@ export class WechatClient {
     };
   }
 
-  async downloadMedia(encryptQueryParam: string, aesKeyBase64: string, savePath: string): Promise<boolean> {
+  async downloadMedia(encryptQueryParam: string, aesKeyRaw: string, savePath: string): Promise<boolean> {
     try {
-      const cdnUrl = `https://novac2c.cdn.weixin.qq.com/c2c?${encryptQueryParam}`;
+      const cdnUrl = `https://novac2c.cdn.weixin.qq.com/c2c/download?encrypted_query_param=${encodeURIComponent(encryptQueryParam)}`;
       const resp = await fetch(cdnUrl);
-      if (!resp.ok) return false;
+      if (!resp.ok) {
+        this.logger.error({ status: resp.status, url: cdnUrl }, 'CDN download returned non-ok status');
+        return false;
+      }
 
       const encryptedBuf = Buffer.from(await resp.arrayBuffer());
-      const key = Buffer.from(aesKeyBase64, 'base64');
+
+      // 解码 AES key：hex 字符串 (32 chars = 16 bytes) 或 base64→hex→bytes
+      let key: Buffer;
+      if (/^[0-9a-fA-F]{32}$/.test(aesKeyRaw)) {
+        // 顶层 aeskey 字段：直接是 hex 字符串
+        key = Buffer.from(aesKeyRaw, 'hex');
+      } else {
+        // media.aes_key 字段：base64(hex_string) → hex decode
+        const hexKey = Buffer.from(aesKeyRaw, 'base64').toString('ascii');
+        key = Buffer.from(hexKey, 'hex');
+      }
+
       const decrypted = decryptMedia(encryptedBuf, key);
 
+      const dir = path.dirname(savePath);
+      fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(savePath, decrypted);
       return true;
     } catch (err) {
-      this.logger.error({ err }, 'Failed to download WeChat media');
+      this.logger.error({ err, savePath }, 'Failed to download WeChat media');
       return false;
     }
   }

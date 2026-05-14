@@ -9,8 +9,9 @@ import styles from '../ChatView.module.css';
 interface MessageListProps {
   messages: ChatMessage[];
   onAnswer: (toolUseId: string, answer: string) => void;
-  onPreview: (f: FileAttachment) => void;
+  onPreview?: (f: FileAttachment) => void;
   autoScrollRef: React.MutableRefObject<boolean>;
+  isRunning?: boolean;
 }
 
 export function MessageList({ messages, onAnswer, onPreview, autoScrollRef }: MessageListProps) {
