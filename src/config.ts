@@ -341,6 +341,20 @@ function wechatBotFromJson(entry: WechatBotJsonEntry): WechatBotConfig {
 
 // --- Shared Claude config builder ---
 
+/** 从 ~/.claude/settings.json 读取环境变量配置（与 CC Switch 同步） */
+function readClaudeSettingsEnv(): Record<string, string> {
+  try {
+    const home = process.env.USERPROFILE || process.env.HOME;
+    if (!home) return {};
+    const settingsPath = path.join(home, '.claude', 'settings.json');
+    if (!fs.existsSync(settingsPath)) return {};
+    const raw = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    return raw.env || {};
+  } catch {
+    return {};
+  }
+}
+
 function buildClaudeConfig(entry: {
   defaultWorkingDirectory: string;
   maxTurns?: number;
@@ -350,12 +364,26 @@ function buildClaudeConfig(entry: {
   outputsBaseDir?: string;
   downloadsDir?: string;
 }): BotConfigBase['claude'] {
+  // 优先读取 ~/.claude/settings.json 中的配置（跟随 CC Switch 切换）
+  const cliEnv = readClaudeSettingsEnv();
+
+  // 同步到 process.env，使 createSpawnFn 中的子进程自动继承
+  if (cliEnv.ANTHROPIC_BASE_URL && !process.env.ANTHROPIC_BASE_URL) {
+    process.env.ANTHROPIC_BASE_URL = cliEnv.ANTHROPIC_BASE_URL;
+  }
+  if (cliEnv.ANTHROPIC_AUTH_TOKEN && !process.env.ANTHROPIC_AUTH_TOKEN) {
+    process.env.ANTHROPIC_AUTH_TOKEN = cliEnv.ANTHROPIC_AUTH_TOKEN;
+  }
+  if (cliEnv.ANTHROPIC_MODEL && !process.env.ANTHROPIC_MODEL) {
+    process.env.ANTHROPIC_MODEL = cliEnv.ANTHROPIC_MODEL;
+  }
+
   return {
     defaultWorkingDirectory: expandUserPath(entry.defaultWorkingDirectory),
     maxTurns: entry.maxTurns ?? (process.env.CLAUDE_MAX_TURNS ? parseInt(process.env.CLAUDE_MAX_TURNS, 10) : undefined),
     maxBudgetUsd: entry.maxBudgetUsd ?? (process.env.CLAUDE_MAX_BUDGET_USD ? parseFloat(process.env.CLAUDE_MAX_BUDGET_USD) : undefined),
-    model: entry.model || process.env.CLAUDE_MODEL || process.env.ANTHROPIC_MODEL || 'claude-opus-4-7',
-    apiKey: entry.apiKey || undefined,
+    model: cliEnv.ANTHROPIC_MODEL || entry.model || process.env.CLAUDE_MODEL || process.env.ANTHROPIC_MODEL || 'claude-opus-4-7',
+    apiKey: cliEnv.ANTHROPIC_AUTH_TOKEN || entry.apiKey || undefined,
     outputsBaseDir: entry.outputsBaseDir || process.env.OUTPUTS_BASE_DIR || path.join(os.tmpdir(), `metabot-outputs-${os.userInfo().username}`),
     downloadsDir: entry.downloadsDir || process.env.DOWNLOADS_DIR || path.join(os.tmpdir(), `metabot-downloads-${os.userInfo().username}`),
   };
